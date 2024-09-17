@@ -13,7 +13,7 @@ def get_main():
 @api.route('/del', methods=['GET', 'POST'])
 def del_data():
     if request.method == 'POST':
-        # Extract the id of the item to be deleted from the form
+        # Extract the id of the item to be deleted from the formm
         item_id = request.form['id']
         
         # Connect to your database (example with SQLite)

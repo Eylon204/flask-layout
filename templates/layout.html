@@ -30,13 +30,21 @@
     li a:hover {
       background-color: #111;
     }
+    
+    form {
+      margin: 20px 0;
+    }
+    
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+    }
     </style>   
   <body>
 <ul>
-  <li><a class="active" href="#home">Home</a></li>
-  <li><a href="/">News</a></li>
-  <li><a href="/about">About</a></li>
-  <li><a href="/one_peice"></a>one peice</li>
+  <li><a class="active" href="/">Home</a></li>
+  <li><a href="/add">Add Movie</a></li>
+  <li><a href="/show">Show Movies</a></li>
 </ul>
 
     <div id="content">{% block content %}{% endblock %}</div>

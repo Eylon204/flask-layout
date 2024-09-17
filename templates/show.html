@@ -1,26 +1,18 @@
 {% extends "layout.html" %}
-{% block title %}Movies List{% endblock %}
+{% block title %}About{% endblock %}
 {% block head %}
   {{ super() }}
   <style type="text/css">
     .important { color: #336699; }
-    form {
-      display: inline;
-    }
   </style>
 {% endblock %}
 {% block content %}
-  <h1>Movies</h1>
-  <ul class="important">
+  <h1>Movies </h1>
+  <p class="important">
+    About homepage.
+
     {% for item in data %}
-      <li>
-        {{ item.title }} ({{ item.year }}) - Rating: {{ item.rating }}
-        <form method="POST" action="/delete/{{ item.id }}" onsubmit="return confirm('Are you sure you want to delete this movie?');">
-          <button type="submit">Delete</button>
-        </form>
-      </li>
-    {% else %}
-      <li>No movies found.</li>
+       <br> {{ item}}
     {% endfor %}
-  </ul>
+
 {% endblock %}

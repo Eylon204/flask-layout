@@ -1,71 +1,64 @@
-from flask import Flask, render_template, request, redirect, url_for
-import sqlite3
+from flask import Flask, render_template, request, redirect
+import sqlite3  # נשתמש ב-sqlite כדי לעבוד עם מסד נתונים קטן
 
-api = Flask(__name__)
+app = Flask(__name__)  # יוצרים את אפליקציית Flask
 
-# פונקציה להתחברות לבסיס הנתונים
-def get_db_connection():
-    con = sqlite3.connect('movies.db')
-    con.row_factory = sqlite3.Row  # הופך את השורות למילון
-    return con
+# פונקציה להתחבר למסד נתונים
+def get_db():
+    return sqlite3.connect('movies.db')  # מתחברים למסד הנתונים שנקרא movies.db
 
-# יצירת טבלה אם היא לא קיימת
+# פונקציה שיוצרת טבלה אם היא לא קיימת
 def create_table():
-    con = get_db_connection()
-    cur = con.cursor()
-    cur.execute('''CREATE TABLE IF NOT EXISTS movies (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    year INTEGER NOT NULL,
-                    rating REAL NOT NULL)''')
-    con.commit()
-    con.close()
+    db = get_db()  # מתחברים למסד הנתונים
+    # יוצרים טבלה בשם movies אם היא לא קיימת
+    db.execute('''CREATE TABLE IF NOT EXISTS movies (
+                    id INTEGER PRIMARY KEY,  # עמודת ID עם מזהה ייחודי
+                    title TEXT,  # עמודת שם הסרט
+                    year INTEGER,  # עמודת שנת יציאה
+                    rating REAL)''')  # עמודת דירוג
+    db.commit()  # שומרים את השינויים למסד הנתונים
+    db.close()  # סוגרים את החיבור למסד הנתונים
 
-create_table()
+create_table()  # קוראים לפונקציה פעם אחת כשהאפליקציה מתחילה כדי לוודא שהטבלה קיימת
 
-# דף הבית
-@api.route('/', methods=['GET'])
-def get_main():
-    return render_template('main.html')
+# עמוד הבית
+@app.route('/')
+def home():
+    return render_template('main.html')  # מציגים את דף הבית (main.html)
 
-# נתיב להוספת סרטים
-@api.route('/add', methods=['GET', 'POST'])
-def add_data():
-    if request.method == 'POST':
-        title = request.form['title']  # שימוש בטופס HTML
-        year = request.form['year']
-        rating = request.form['rating']
-        
-        con = get_db_connection()
-        cur = con.cursor()
-        cur.execute('''INSERT INTO movies (title, year, rating) VALUES (?, ?, ?)''',
-                    (title, year, rating))
-        con.commit()
-        con.close()
-        
-        return redirect(url_for('show_data'))
-    else:
-        return render_template('add.html')
+# הוספת סרט חדש
+@app.route('/add', methods=['GET', 'POST'])
+def add_movie():
+    if request.method == 'POST':  # אם יש בקשת POST (כלומר שמישהו מילא ושלח את הטופס)
+        title = request.form['title']  # לוקחים את השם מהטופס
+        year = request.form['year']  # לוקחים את השנה מהטופס
+        rating = request.form['rating']  # לוקחים את הדירוג מהטופס
+        db = get_db()  # מתחברים למסד הנתונים
+        # מוסיפים את הסרט החדש לטבלה
+        db.execute('INSERT INTO movies (title, year, rating) VALUES (?, ?, ?)', 
+                   (title, year, rating))
+        db.commit()  # שומרים את השינויים למסד הנתונים
+        db.close()  # סוגרים את החיבור
+        return redirect('/show')  # מפנים את המשתמש לדף שמציג את הסרטים
+    return render_template('add.html')  # אם זו בקשת GET (כלומר כשמישהו נכנס לדף), מציגים את דף ההוספה
 
-# נתיב להצגת רשימת הסרטים
-@api.route('/show', methods=['GET'])
-def show_data():
-    con = get_db_connection()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM movies")
-    movies = cur.fetchall()  # משיג את כל השורות
-    con.close()
-    return render_template('show.html', data=movies)
+# הצגת כל הסרטים
+@app.route('/show')
+def show_movies():
+    db = get_db()  # מתחברים למסד הנתונים
+    movies = db.execute('SELECT * FROM movies').fetchall()  # משיגים את כל הסרטים מהטבלה
+    db.close()  # סוגרים את החיבור למסד הנתונים
+    return render_template('show.html', data=movies)  # מציגים את הסרטים בדף show.html
 
-# נתיב למחיקת סרט לפי מזהה
-@api.route('/delete/<int:id>', methods=['POST'])
+# מחיקת סרט לפי מזהה
+@app.route('/delete/<int:id>', methods=['POST'])
 def delete_movie(id):
-    con = get_db_connection()
-    cur = con.cursor()
-    cur.execute('DELETE FROM movies WHERE id = ?', (id,))
-    con.commit()
-    con.close()
-    return redirect(url_for('show_data'))
+    db = get_db()  # מתחברים למסד הנתונים
+    db.execute('DELETE FROM movies WHERE id = ?', (id,))  # מוחקים את הסרט עם המזהה שקיבלנו
+    db.commit()  # שומרים את השינויים למסד הנתונים
+    db.close()  # סוגרים את החיבור למסד הנתונים
+    return redirect('/show')  # מעבירים את המשתמש חזרה לדף שמציג את הסרטים
 
+# הפעלת האפליקציה
 if __name__ == '__main__':
-    api.run(debug=True)
+    app.run(debug=True)  # מפעילים את האפליקציה עם מצב debug כדי לעזור בתיקון שגיאות
